@@ -1,0 +1,19 @@
+{
+  "name": "webpack-virtual-module-rebuild",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "build": "webpack --config webpack.config.js",
+    "serve": "webpack-dev-server --config webpack.config.js",
+    "debug": "node --inspect --debug-brk node_modules/webpack-dev-server/bin/webpack-dev-server.js --config webpack.config.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "html-webpack-plugin": "^2.30.1",
+    "webpack": "3.7.1",
+    "webpack-dev-server": "^2.9.1"
+  }
+}
