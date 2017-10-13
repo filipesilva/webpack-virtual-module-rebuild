@@ -21,6 +21,7 @@ class VirtualFileStats {
     this._gid = process.env['GID'] || 0;
   }
 
+  get path() { return this._path; }
   get content() { return this._content; }
 
   isFile() { return true; }
@@ -62,6 +63,10 @@ class VirtualFileSystemDecorator {
 
   updateInputfileSystem(inputFileSystem) {
     this._inputFileSystem = inputFileSystem;
+  }
+
+  getVirtualFilesStats() {
+    return Array.from(this.virtualFiles.values());
   }
 
   _log(prefix, path) {
@@ -149,6 +154,24 @@ class VirtualFileSystemDecorator {
   }
 }
 
+class VirtualWatchFileSystemDecorator extends NodeWatchFileSystem {
+  constructor(virtualInputFileSystem) {
+    super(virtualInputFileSystem);
+  }
+
+  watch(files, dirs, missing, startTime, options, callback, callbackUndelayed) {
+    const newCallback = (err, filesModified, contextModified, missingModified, fileTimestamps, contextTimestamps) => {
+      debugger;
+      const virtualFilesStats = this.inputFileSystem.getVirtualFilesStats();
+      // fileTimestamps and contextTimestamps are the same object, so we can just write to one of them.
+      virtualFilesStats.forEach(stats => fileTimestamps[stats.path] = +stats.mtime);
+      callback(err, filesModified, contextModified, missingModified, fileTimestamps, contextTimestamps);
+    }
+    return super.watch(files, dirs, missing, startTime, options, newCallback, callbackUndelayed);
+  }
+}
+
+
 class VirtualFilesPlugin {
   constructor(baseDir, files) {
     this.vfsd = new VirtualFileSystemDecorator(baseDir);
@@ -162,7 +185,7 @@ class VirtualFilesPlugin {
     this.vfsd.updateInputfileSystem(compiler.inputFileSystem);
     compiler.plugin('environment', () => {
       compiler.inputFileSystem = this.vfsd;
-      compiler.watchFileSystem = new NodeWatchFileSystem(compiler.inputFileSystem);
+      compiler.watchFileSystem = new VirtualWatchFileSystemDecorator(compiler.inputFileSystem);
     });
   }
 }
